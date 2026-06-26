@@ -1,25 +1,14 @@
 // ─────────────────────────────────────────
 //  routes/contact.js
 //  Handles POST /api/contact
-//  Saves message and notifies admin
 // ─────────────────────────────────────────
 
 const express    = require('express');
 const router     = express.Router();
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const Contact    = require('../models/Contact');
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── POST /api/contact ─────────────────────
 router.post('/', async (req, res) => {
@@ -38,47 +27,41 @@ router.post('/', async (req, res) => {
     const newContact = new Contact({ name, email, phone, subject, message });
     await newContact.save();
 
-    // 3. Send email to admin
-    try {
-      const transporter = createTransporter();
-
-      await transporter.sendMail({
-        from:    process.env.EMAIL_USER,
-        to:      process.env.ADMIN_EMAIL,
-        subject: `📩 New Contact Message — ${subject || 'General'} from ${name}`,
-        html: `
-          <h2>New Contact Message</h2>
-          <p><strong>From:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || '—'}</p>
-          <p><strong>Subject:</strong> ${subject || '—'}</p>
-          <hr/>
-          <p><strong>Message:</strong></p>
-          <p>${message}</p>
-        `,
-      });
-
-      // Auto-reply to the person
-      await transporter.sendMail({
-        from:    process.env.EMAIL_USER,
-        to:      email,
-        subject: `Thanks for reaching out to LIRP, ${name}!`,
-        html: `
-          <h2>Hi ${name}! 👋</h2>
-          <p>We received your message and will get back to you within <strong>24 hours</strong>.</p>
-          <p>For urgent queries, WhatsApp us at <strong>+91 XXXXXXXXXX</strong></p>
-          <br/>
-          <p>— The LIRP Team</p>
-        `,
-      });
-    } catch (emailErr) {
-      console.error('Email error (message saved anyway):', emailErr.message);
-    }
-
+    // 3. Pehle response do
     res.status(201).json({
       success: true,
       message: 'Message sent successfully!',
     });
+
+    // 4. Background mein email bhejo
+    resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: process.env.ADMIN_EMAIL,
+      subject: `📩 New Contact Message — ${subject || 'General'} from ${name}`,
+      html: `
+        <h2>New Contact Message</h2>
+        <p><strong>From:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone || '—'}</p>
+        <p><strong>Subject:</strong> ${subject || '—'}</p>
+        <hr/>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
+      `,
+    }).catch(err => console.error('Admin email error:', err.message));
+
+    resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: email,
+      subject: `Thanks for reaching out to LIRP, ${name}!`,
+      html: `
+        <h2>Hi ${name}! 👋</h2>
+        <p>We received your message and will get back to you within <strong>24 hours</strong>.</p>
+        <p>For urgent queries, WhatsApp us at <strong>+91 XXXXXXXXXX</strong></p>
+        <br/>
+        <p>— The LIRP Team</p>
+      `,
+    }).catch(err => console.error('Student email error:', err.message));
 
   } catch (err) {
     console.error('Contact route error:', err);
