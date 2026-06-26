@@ -26,18 +26,14 @@ export default function ConsultationModal({ isOpen, onClose }) {
 
   const handleSubmit = async (ev) => {
   ev.preventDefault();
-
   if (!validate()) return;
 
   try {
-   const res = await api.post('/consultation', formData);
-
-    const data = await response.json();
-
-    if (data.success) {
+    const res = await api.post('/consultation', formData);
+    if (res.data.success) {
       setSubmitted(true);
     } else {
-      alert(data.message);
+      alert(res.data.message);
     }
   } catch (error) {
     console.error(error);
