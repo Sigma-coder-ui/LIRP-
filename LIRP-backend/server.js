@@ -26,8 +26,9 @@ const app = express();
 // 1. CORS — allows your React frontend to call this backend
 //    Without this, the browser would block the request
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  methods: ['GET', 'POST'],
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // 2. JSON parser — lets us read req.body as JavaScript object
