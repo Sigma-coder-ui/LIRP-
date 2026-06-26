@@ -1,27 +1,14 @@
 // ─────────────────────────────────────────
 //  routes/apply.js
 //  Handles POST /api/apply
-//  When user submits the application form,
-//  this saves it to MongoDB and sends an email
 // ─────────────────────────────────────────
 
-const express    = require('express');
-const router     = express.Router();
-const nodemailer = require('nodemailer');
+const express     = require('express');
+const router      = express.Router();
+const { Resend }  = require('resend');
 const Application = require('../models/Application');
 
-// ── Email helper ─────────────────────────
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── POST /api/apply ───────────────────────
 router.post('/', async (req, res) => {
@@ -46,18 +33,16 @@ router.post('/', async (req, res) => {
     });
     await newApplication.save();
 
-    // 3. Pehle response do — user wait nahi karega!
+    // 3. Pehle response do
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully!',
     });
 
     // 4. Background mein email bhejo
-    const transporter = createTransporter();
-
-    transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to:   process.env.ADMIN_EMAIL,
+    resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: process.env.ADMIN_EMAIL,
       subject: `🎓 New LIRP Application — ${firstName} ${lastName}`,
       html: `
         <h2>New Application Received</h2>
@@ -82,16 +67,14 @@ router.post('/', async (req, res) => {
       `,
     }).catch(err => console.error('Admin email error:', err.message));
 
-    transporter.sendMail({
-      from:    process.env.EMAIL_USER,
-      to:      email,
+    resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: email,
       subject: `✅ We received your LIRP application, ${firstName}!`,
       html: `
         <h2>Hi ${firstName}! 👋</h2>
         <p>We've received your application for <strong>${course}</strong>.</p>
         <p>Our team will review it and reach out on <strong>WhatsApp within 24 hours</strong>.</p>
-        <br/>
-        <p>In the meantime, feel free to WhatsApp us at <strong>+91 XXXXXXXXXX</strong></p>
         <br/>
         <p>— The LIRP Team 🚀</p>
       `,
