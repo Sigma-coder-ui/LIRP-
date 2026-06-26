@@ -43,9 +43,17 @@ export default function ApplyPage() {
   const errs = validate();
   if (Object.keys(errs).length) { setErrors(errs); return; }
 
-  const res = await api.post('/apply', formData);
-  const data = await res.json();
-  if (data.success) setSubmitted(true);
+  try {
+    const res = await api.post('/apply', formData);
+    if (res.data.success) {
+      setSubmitted(true);
+    } else {
+      alert(res.data.message);
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Failed to submit application');
+  }
 };
 
   const handleChange = (ev) => {

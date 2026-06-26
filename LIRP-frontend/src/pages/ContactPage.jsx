@@ -25,17 +25,20 @@ export default function ContactPage() {
   //   if (!validate()) return;
   //   setSubmitted(true);
   // };
-  const handleSubmit = async (ev) => {
+const handleSubmit = async (ev) => {
   ev.preventDefault();
   if (!validate()) return;
 
   try {
-   const res = await api.post('/contact', formData);
-    const data = await res.json();
-    if (data.success) setSubmitted(true);
-    else alert(data.message);
-  } catch (err) {
-    alert('Something went wrong. Please try again.');
+    const res = await api.post('/contact', formData);
+    if (res.data.success) {
+      setSubmitted(true);
+    } else {
+      alert(res.data.message);
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Failed to submit contact form');
   }
 };
 
