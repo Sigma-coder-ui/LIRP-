@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, Send } from 'lucide-react';
+import api from '../api';
 
 export default function ConsultationModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', course: '', college: '', concern: '' });
@@ -29,16 +30,7 @@ export default function ConsultationModal({ isOpen, onClose }) {
   if (!validate()) return;
 
   try {
-    const response = await fetch(
-      'http://localhost:5000/api/consultation',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      }
-    );
+   const res = await api.post('/consultation', formData);
 
     const data = await response.json();
 

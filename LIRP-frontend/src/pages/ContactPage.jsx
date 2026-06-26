@@ -30,11 +30,7 @@ export default function ContactPage() {
   if (!validate()) return;
 
   try {
-    const res = await fetch('http://localhost:5000/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
+   const res = await api.post('/contact', formData);
     const data = await res.json();
     if (data.success) setSubmitted(true);
     else alert(data.message);

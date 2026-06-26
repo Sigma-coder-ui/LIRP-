@@ -43,11 +43,7 @@ export default function ApplyPage() {
   const errs = validate();
   if (Object.keys(errs).length) { setErrors(errs); return; }
 
-  const res = await fetch('http://localhost:5000/api/apply', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData),
-  });
+  const res = await api.post('/apply', formData);
   const data = await res.json();
   if (data.success) setSubmitted(true);
 };
